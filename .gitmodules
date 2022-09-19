@@ -1,0 +1,8 @@
+[submodule "xml/dtd"]
+	path = xml/dtd
+	url = https://anongit.gentoo.org/git/data/dtd.git
+	branch = master
+[submodule "xml/xsd"]
+	path = xml/xsd
+	url = https://anongit.gentoo.org/git/data/xml-schema.git
+	branch = master
