@@ -11,3 +11,4 @@
   - [ ] [projects.xml](xml/projects.go)
   - [X] ~~[repositories.xml](xml/repositories.go)~~
   - [ ] [userinfo.xml](xml/userinfo.go)
+- [ ] Add tests for all
