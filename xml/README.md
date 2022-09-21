@@ -6,5 +6,6 @@
 - [ ] glsa.xml 
 - [X] [metadata.xml](https://devmanual.gentoo.org/ebuild-writing/misc-files/metadata/index.html) - as defined in [GLEP 68](https://www.gentoo.org/glep/glep-0068.html) and [GLEP 67](https://www.gentoo.org/glep/glep-0067.html).
 - [X] mirrors.xml
+- [X] projects.xml
 - [X] repositories.xml
 - [ ] userinfo.xml
