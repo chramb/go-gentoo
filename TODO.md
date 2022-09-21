@@ -3,6 +3,7 @@
 - [ ] add comments/documentation
 - [ ] Create
   - [ ] [glsa.xml](xml/glsa.go)
+    - [ ] make parser convert attrs `(yes|no)` -> `bool`
   - [ ] [metadata.xml]()
     - [ ] support freeform text in tags like `<longdescription/>`
     - [ ] add `<pkg/>` and `<cat/>`

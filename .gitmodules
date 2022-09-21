@@ -6,3 +6,7 @@
 	path = xml/xsd
 	url = https://anongit.gentoo.org/git/data/xml-schema.git
 	branch = master
+[submodule "xml/glsa"]
+	path = xml/glsa
+	url = https://anongit.gentoo.org/git/data/glsa.git
+	branch = master
