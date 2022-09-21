@@ -8,4 +8,4 @@
 - [X] mirrors.xml
 - [X] projects.xml
 - [X] repositories.xml
-- [ ] userinfo.xml
+- [X] userinfo.xml
