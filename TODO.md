@@ -12,3 +12,4 @@
   - [X] ~~[repositories.xml](xml/repositories.go)~~
   - [ ] [userinfo.xml](xml/userinfo.go)
 - [ ] Add tests for all
+- [ ] add `validate()` function
