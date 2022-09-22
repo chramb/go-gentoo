@@ -86,13 +86,18 @@ func parseSuffix(v string) (s suffix, rest string, ok bool) {
 		return
 	}
 	// Will find prefixes without num
-	i := 0
-	for i < len(v) && v[i] != '_' && !isNumber(v[i]) {
+	i := 1
+	for i < len(v) && v[i] != '_' && v[i] != '-' && !isNumber(v[i]) {
 		i++
 	}
 	s.txt = v[1:i]
-	s.num = 0
+	numBegin := i
+	for i < len(v) && v[i] != '_' && v[i] != '-' && isNumber(v[i]) {
+		i++
+	}
+	s.num = v[numBegin:i]
 	// TODO append all suffixes with numbers to the list then sort it
+	return s, v[i:], true
 }
 func parseRevision() {}
 
