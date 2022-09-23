@@ -1,13 +1,12 @@
 package version
 
-import "sort"
+import (
+	"sort"
+)
 
 /*
-TODO: parse text until function
 TODO: create parse func
 TODO: create compare
-TODO: sort for version
-TODO: sort for
 */
 
 // VersionRegex
@@ -37,7 +36,7 @@ type PMSVersion struct {
 	number   []string
 	letter   string
 	suffix   []suffix
-	revision string
+	revision suffix
 }
 
 type ByVersion []string
@@ -50,25 +49,40 @@ func Sort(list []string) {
 	sort.Sort(ByVersion(list))
 }
 
+func parseInts(v string) (nums []string, rest string, ok bool) {
+	if v == "" {
+		return
+	}
+	rest = v
+	for rest != "" && rest[0] != '_' && rest[0] != '-' {
+		if rest[0] == '.' {
+			rest = rest[1:]
+		}
+		var num string
+		num, rest, ok = parseInt(rest)
+		nums = append(nums, num)
+	}
+	if len(rest) == 0 || rest[0] == '_' || rest[0] == '-' {
+		ok = true
+	}
+	return nums, rest, ok
+}
 func parseInt(v string) (num, rest string, ok bool) {
 	if v == "" {
 		return
 	}
-	/* no point just change i := (1 -> 0) // semver.go sucks
-	if v[0] < '0' || '9' < v[0] {
-		return
-	}
-	*/
 	i := 0
-	//for i < len(v) && '0' <= v[i] && v[i] <= '9' {
 	for i < len(v) && isNumber(v[i]) {
 		i++
 	}
+	/* Check PMS if it allows it or not
 	if v[0] == '0' && i != 1 { // 0 can be only if it's the only digit
 		return
 	}
+	*/
 	return v[:i], v[i:], true
 }
+
 func parseLetter(v string) (letter, rest string, ok bool) {
 	if v == "" {
 		return
@@ -80,8 +94,8 @@ func parseLetter(v string) (letter, rest string, ok bool) {
 }
 
 func parseSuffix(v string) (s suffix, rest string, ok bool) {
-	suffixes := [...]string{"alpha", "beta", "pre", "rc", "p"}
-	_ = suffixes
+	// suffixes := [...]string{"alpha", "beta", "pre", "rc", "p"}
+	// _ = suffixes TODO: instead just compare to viable suffixes
 	if v == "" || v[0] != '_' {
 		return
 	}
@@ -91,15 +105,26 @@ func parseSuffix(v string) (s suffix, rest string, ok bool) {
 		i++
 	}
 	s.txt = v[1:i]
-	numBegin := i
-	for i < len(v) && v[i] != '_' && v[i] != '-' && isNumber(v[i]) {
-		i++
-	}
-	s.num = v[numBegin:i]
-	// TODO append all suffixes with numbers to the list then sort it
-	return s, v[i:], true
+	s.num, rest, _ = parseInt(v[i:])
+	return s, rest, true
 }
-func parseRevision() {}
+func parseSuffixes(v string) (s []suffix, rest string, ok bool) {
+	if v == "" {
+		return
+	}
+	rest = v
+	for len(rest) > 0 && rest[0] != '-' {
+		var sx suffix
+		sx, rest, ok = parseSuffix(rest)
+		print("suffix found: ", sx.txt, sx.num, "\n")
+		s = append(s, sx)
+	}
+
+	if rest == "" || rest[0] == '-' {
+		ok = true
+	}
+	return s, rest, ok
+}
 
 func Compare(v, w PMSVersion) {
 
