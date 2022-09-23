@@ -1,138 +1,102 @@
 package version
 
 import (
-	"sort"
+	"strconv"
+	"strings"
 )
 
-/*
-TODO: create parse func
-TODO: create compare
-*/
-
-// VersionRegex
-/*
-As defined in https://projects.gentoo.org/pms/8/pms.html#x1-250003.2
-
-[0-9]+(\.[0-9]+)*
-		uint followed by 0+ uints prefixed by '.'
-[a-z]?
-		MAY be followed by 1 lowercase letter (OpenSSL to blame)
-(_(alpha|beta|pre|rc|p)[0-9]*)*
-		MAY be followed by 0+ of _alpha, _beta, _pre, _rc or _p,
-		each of which MAY optionally be followed by an uint.
-		Suffix and integer count as separate version components.
-(-r[0-9]*)?
-		MAY optionally be followed by the suffix -r
-		followed immediately by 1 uint (the “revision number”).
-		If this suffix is not present, it is assumed to be -r0.￥
-*/
-const VersionRegex = `[0-9]+(\.[0-9]+)*[a-z]?(_(alpha|beta|pre|rc|p)[0-9]*)*(-r[0-9]*)?`
+// TODO: sort versions (interface)
 
 type suffix struct {
 	txt string
-	num string
+	rev uint
 }
+
 type PMSVersion struct {
-	number   []string
-	letter   string
-	suffix   []suffix
-	revision suffix
+	nums []uint // array of number versions 10.0.103 -> [10 0 103]
+	// TODO implement: letter string    // char e.g. Openssl 1.0.1j -> j
+	// TODO implement: suf    []suffix  // suffix e.g. _alpha123 -> { "alpha", "123" }
+	// TODO implement: rel    string    // release e.g. -r1 -> "1" (if none 0 is implied)
 }
 
-type ByVersion []string
-
-func (vs ByVersion) Len() int           { return len(vs) }
-func (vs ByVersion) Swap(i, j int)      { vs[i], vs[j] = vs[j], vs[i] }
-func (vs ByVersion) Less(i, j int) bool { return false } // TODO
-
-func Sort(list []string) {
-	sort.Sort(ByVersion(list))
-}
-
-func parseInts(v string) (nums []string, rest string, ok bool) {
+func parse(v string) (p PMSVersion, ok bool) {
+	// TODO: `for until number` and then split pass only numbers with . to parsenums
 	if v == "" {
 		return
 	}
-	rest = v
-	for rest != "" && rest[0] != '_' && rest[0] != '-' {
-		if rest[0] == '.' {
-			rest = rest[1:]
-		}
-		var num string
-		num, rest, ok = parseInt(rest)
-		nums = append(nums, num)
-	}
-	if len(rest) == 0 || rest[0] == '_' || rest[0] == '-' {
-		ok = true
-	}
-	return nums, rest, ok
-}
-func parseInt(v string) (num, rest string, ok bool) {
-	if v == "" {
-		return
-	}
+	/*/ parseInts{
 	i := 0
-	for i < len(v) && isNumber(v[i]) {
+	for i < len(v) && isNum(v[i:i]) || v[i] == '.' {
 		i++
 	}
-	/* Check PMS if it allows it or not
-	if v[0] == '0' && i != 1 { // 0 can be only if it's the only digit
-		return
-	}
-	*/
-	return v[:i], v[i:], true
+	sNums := v[:i]
+	*/                   // } parseInts
+	nums := parseNums(v) //sNums
+	return PMSVersion{nums}, true
 }
 
-func parseLetter(v string) (letter, rest string, ok bool) {
-	if v == "" {
-		return
-	}
-	if 'a' <= v[0] && v[0] <= 'z' {
-		return v[:1], v[1:], true
-	}
-	return
+// compare returns int depending on which PMSVersion is higher
+//   0 if A == B
+//   1 if A >  B
+//  -1 if A <  B
+func compare(v1, v2 PMSVersion) int {
+	return compareNums(v1.nums, v2.nums)
 }
 
-func parseSuffix(v string) (s suffix, rest string, ok bool) {
-	// suffixes := [...]string{"alpha", "beta", "pre", "rc", "p"}
-	// _ = suffixes TODO: instead just compare to viable suffixes
-	if v == "" || v[0] != '_' {
-		return
+func parseNums(v string) []uint {
+	sNums := strings.Split(v, ".")
+	var nums []uint
+	for _, s := range sNums {
+		i, err := strconv.Atoi(s)
+		if err != nil {
+			panic(err)
+		}
+		nums = append(nums, uint(i))
 	}
-	// Will find prefixes without num
-	i := 1
-	for i < len(v) && v[i] != '_' && v[i] != '-' && !isNumber(v[i]) {
+	return nums
+}
+
+// compareNums returns int depending on which version is higher
+//   0 if A == B
+//   1 if A >  B
+//  -1 if A <  B
+func compareNums(A, B []uint) int {
+	Ann, Bnn := len(A), len(B)
+	var shorter []uint
+	if Ann < Bnn {
+		shorter = A
+	} else {
+		shorter = B
+	}
+	// Algorithm 3.2
+	if A[0] > B[0] {
+		return 1
+	} else if A[0] < B[0] {
+		return -1
+	} else {
+		// Algorithm 3.3
+		for i, _ := range shorter {
+			// omitted stringwise comparison because it will be redundant? (I think)
+			if A[i] > B[i] {
+				return 1
+			} else if A[i] < B[i] {
+				return -1
+			}
+		}
+	}
+	// I think this should be earlier because it will resolve quicker
+	if Ann > Bnn {
+		return 1
+	} else if Ann < Bnn {
+		return -1
+	}
+	return 0
+}
+
+func isNum(v string) bool {
+	i := 0
+	for i < len(v) && '0' <= v[i] && v[i] <= '9' {
 		i++
 	}
-	s.txt = v[1:i]
-	s.num, rest, _ = parseInt(v[i:])
-	return s, rest, true
-}
-func parseSuffixes(v string) (s []suffix, rest string, ok bool) {
-	if v == "" {
-		return
-	}
-	rest = v
-	for len(rest) > 0 && rest[0] != '-' {
-		var sx suffix
-		sx, rest, ok = parseSuffix(rest)
-		print("suffix found: ", sx.txt, sx.num, "\n")
-		s = append(s, sx)
-	}
-
-	if rest == "" || rest[0] == '-' {
-		ok = true
-	}
-	return s, rest, ok
-}
-
-func Compare(v, w PMSVersion) {
-
-}
-
-func isNumber(r uint8) bool {
-	if '0' <= r && r <= '9' {
-		return true
-	}
-	return false
+	return i == len(v)
 }
